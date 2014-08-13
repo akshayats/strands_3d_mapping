@@ -23,11 +23,31 @@ include_directories(include
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(metaroomXMLparser src/simpleXMLparser.cpp include/simpleXMLparser.h)
+set(HDRS
+    include/simpleXMLparser.h
+    )
 
- target_link_libraries(metaroomXMLparser
+set(SRCS
+    src/simpleXMLparser.cpp
+    )
+
+add_library(metaroomXMLparser ${HDRS} ${SRCS})
+
+add_executable(load_single_file src/loadSingleFileMain.cpp)
+
+ target_link_libraries(load_single_file
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${QT_LIBRARIES}
+   metaroomXMLparser
+ )
+
+add_executable(load_multiple_files src/loadMultipleFilesMain.cpp)
+
+ target_link_libraries(load_multiple_files
+   ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
+   ${QT_LIBRARIES}
+   metaroomXMLparser
  )
 

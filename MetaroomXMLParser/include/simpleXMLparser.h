@@ -16,6 +16,9 @@
 
 #include <image_geometry/pinhole_camera_model.h>
 
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 template <class PointType>
 class SimpleXMLParser {
 public:
@@ -32,9 +35,11 @@ public:
 
     struct RoomData
     {
-        std::vector<CloudPtr>               vIntermediateRoomClouds;
+        std::vector<CloudPtr>                            vIntermediateRoomClouds;
         std::vector<tf::StampedTransform>                vIntermediateRoomCloudTransforms;
         std::vector<image_geometry::PinholeCameraModel>  vIntermediateRoomCloudCamParams;
+        std::vector<cv::Mat>                             vIntermediateRGBImages; // type CV_8UC3
+        std::vector<cv::Mat>                             vIntermediateDepthImages; // type CV_16UC1
         CloudPtr                                         completeRoomCloud;
 
         RoomData(){
@@ -51,6 +56,28 @@ public:
     ~SimpleXMLParser()
     {
 
+    }
+
+    static std::pair<cv::Mat, cv::Mat> createRGBandDepthFromPC(CloudPtr cloud)
+    {
+        std::pair<cv::Mat, cv::Mat> toRet;
+        toRet.first = cv::Mat::zeros(480, 640, CV_8UC3); // RGB image
+        toRet.second = cv::Mat::zeros(480, 640, CV_16UC1); // Depth image
+        pcl::PointXYZRGB point;
+        for (size_t y = 0; y < toRet.first.rows; ++y) {
+            for (size_t x = 0; x < toRet.first.cols; ++x) {
+                point = cloud->points[y*toRet.first.cols + x];
+                // RGB
+                toRet.first.at<cv::Vec3b>(y, x)[0] = point.b;
+                toRet.first.at<cv::Vec3b>(y, x)[1] = point.g;
+                toRet.first.at<cv::Vec3b>(y, x)[2] = point.r;
+                // Depth
+                toRet.second.at<u_int16_t>(y, x) = point.z*1000; // convert to uint 16 from meters
+
+            }
+        }
+
+        return toRet;
     }
 
     static RoomData loadRoomFromXML(const std::string& xmlFile)
@@ -139,6 +166,9 @@ public:
                         aRoom.vIntermediateRoomClouds.push_back(cloud);
                         aRoom.vIntermediateRoomCloudTransforms.push_back(intermediateCloudData.transform);
                         aRoom.vIntermediateRoomCloudCamParams.push_back(aCameraModel);
+                        std::pair<cv::Mat,cv::Mat> rgbAndDepth = SimpleXMLParser<PointType>::createRGBandDepthFromPC(cloud);
+                        aRoom.vIntermediateRGBImages.push_back(rgbAndDepth.first);
+                        aRoom.vIntermediateRGBImages.push_back(rgbAndDepth.second);
                     }
 
                 }
