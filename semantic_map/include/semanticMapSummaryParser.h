@@ -307,6 +307,8 @@ public:
         if (rootFolder == "")
         {
             qrootFolder =(QDir::homePath() + QString("/.semanticMap/"));
+        } else {
+            qrootFolder = rootFolder.c_str();
         }
 
         if (!QDir(qrootFolder).exists())
@@ -414,7 +416,6 @@ private:
     {
         xmlWriter->writeStartElement("SemanticRooms");
 
-
         // parse folder structure and look for semantic objects
         QStringList dateFolders = QDir(qrootFolder).entryList(QStringList("*"),
                                                         QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot,QDir::Time);
@@ -439,7 +440,7 @@ private:
 
             if (!isValidDate)
             {
-//                std::cout<<"Skipping folder "<<dateFolders[i].toStdString()<<" as it doesn't have the right format."<<std::endl;
+                std::cout<<"Skipping folder "<<dateFolders[i].toStdString()<<" as it doesn't have the right format."<<std::endl;
                 continue;
             }
 
@@ -453,6 +454,7 @@ private:
                                                                      QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot,QDir::Time| QDir::Reversed);
                 for (size_t k=0; k<roomFolders.size(); k++)
                 {
+
                     // parse XML file and extract some important fields with which to populate the index.html file
                     QString roomXmlFile = patrolFolder+"/"+roomFolders[k] + "/room.xml";
                     SemanticRoom<PointType> aRoom = SemanticRoomXMLParser<PointType>::loadRoomFromXML(roomXmlFile.toStdString(), false);
@@ -483,7 +485,7 @@ private:
                     xmlWriter->writeEndElement();
 
                     xmlWriter->writeEndElement();
-//                    ROS_INFO_STREAM("Added room "<<roomXmlFile.toStdString());
+                    ROS_INFO_STREAM("Added room "<<roomXmlFile.toStdString());
                 }
             }
         }
