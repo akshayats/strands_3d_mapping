@@ -17,6 +17,7 @@ rosbuild_prepare_qt4(QtCore QtXml)
 
 catkin_package(
    INCLUDE_DIRS include
+   DEPENDS qt_build image_geometry libqt4-dev
 )
 
 include_directories(include
