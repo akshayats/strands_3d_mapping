@@ -1,16 +1,15 @@
 #include "simpleXMLparser.h"
-
-#include <semanticMapSummaryParser.h>
+#include "simpleSummaryParser.h"
 
 typedef pcl::PointXYZRGB PointType;
 
-typedef typename SemanticMapSummaryParser<PointType>::EntityStruct Entities;
+typedef typename SimpleSummaryParser<PointType>::EntityStruct Entities;
 
 using namespace std;
 
 int main(int argc, char** argv)
 {
-    SemanticMapSummaryParser<PointType> summary_parser("/home/rares/data/test_parser/index.xml");
+    SimpleSummaryParser<PointType> summary_parser("/home/rares/data/test_parser/index.xml");
     summary_parser.createSummaryXML("/home/rares/data/test_parser/");
 
     SimpleXMLParser<PointType> simple_parser;

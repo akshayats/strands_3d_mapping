@@ -4,7 +4,7 @@ project(metaroom_xml_parser)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs sensor_msgs pcl_ros qt_build image_geometry semantic_map)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs sensor_msgs pcl_ros qt_build image_geometry)
 
 set(CMAKE_CXX_FLAGS "-O4 -g -fPIC -std=c++0x -fpermissive")
 
@@ -26,10 +26,12 @@ include_directories(include
 
 set(HDRS
     include/simpleXMLparser.h
+    include/simpleSummaryParser.h
     )
 
 set(SRCS
     src/simpleXMLparser.cpp
+    src/simpleSummaryParser.cpp
     )
 
 add_library(metaroomXMLparser ${HDRS} ${SRCS})
