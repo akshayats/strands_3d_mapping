@@ -96,24 +96,47 @@ public:
 
         std::vector<SemanticMapSummaryParser<PointType>::EntityStruct> allRooms = getRooms();
 
+        std::vector<std::pair<std::string, boost::posix_time::ptime> > currentMatches;
+
         for (int i=0; i<allRooms.size();i++)
         {
+            bool matchesFound = false;
             int matches = 1;
             for (int j=i+1; j<allRooms.size();j++)
             {
+                currentMatches.push_back(std::make_pair(allRooms[i].roomXmlFile,allRooms[i].roomLogStartTime));
                 double centroidDistance = pcl::distances::l2(allRooms[i].centroid,allRooms[j].centroid);
                 if (! (centroidDistance < ROOM_CENTROID_DISTANCE) )
                 {
                     continue;
                 } else {
                     matches++;
+                    currentMatches.push_back(std::make_pair(allRooms[j].roomXmlFile,allRooms[j].roomLogStartTime));
+                    matchesFound = true;
                 }
             }
 
-            if (matches > maxInstances) // too many instances of this room. Remove this one.
+            while (matches > maxInstances) // too many instances of this room
             {
                 ROS_INFO_STREAM("Observation "<<allRooms[i].roomXmlFile<<" has "<<matches<<" instances.");
-                QString roomXml(allRooms[i].roomXmlFile.c_str());
+                // find oldest observations and remove them
+
+                std::string oldestRoomFile = currentMatches[0].first;
+                boost::posix_time::ptime oldestRoomTime = currentMatches[0].second;
+                int oldestIndex = 0;
+                for (int k=1; k<currentMatches.size();k++)
+                {
+                    if (currentMatches[k].second < oldestRoomTime)
+                    {
+                        oldestRoomFile = currentMatches[k].first;
+                        oldestRoomTime = currentMatches[k].second;
+                        oldestIndex = k;
+                    }
+                }
+
+//                currentMatches[oldestIndex].second = boost::posix_time::ptime:: // update the time so we don't remove this observation again
+
+                QString roomXml(currentMatches[oldestIndex].first.c_str());
                 int lastIndex = roomXml.lastIndexOf("/");
                 QString observationFolderPath = roomXml.left(lastIndex);
                 if (!cache)
@@ -139,6 +162,16 @@ public:
                     }
                 }
 
+                // remove element from vector
+                currentMatches.erase(currentMatches.begin()+oldestIndex);
+            }
+
+            // update list of rooms & metarooms
+            if (matchesFound)
+            {
+                refresh();
+                allRooms = getRooms();
+                i=0;
             }
         }
 
