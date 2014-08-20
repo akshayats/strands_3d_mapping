@@ -102,9 +102,9 @@ public:
         {
             bool matchesFound = false;
             int matches = 1;
+            currentMatches.push_back(std::make_pair(allRooms[i].roomXmlFile,allRooms[i].roomLogStartTime));
             for (int j=i+1; j<allRooms.size();j++)
             {
-                currentMatches.push_back(std::make_pair(allRooms[i].roomXmlFile,allRooms[i].roomLogStartTime));
                 double centroidDistance = pcl::distances::l2(allRooms[i].centroid,allRooms[j].centroid);
                 if (! (centroidDistance < ROOM_CENTROID_DISTANCE) )
                 {
@@ -112,13 +112,13 @@ public:
                 } else {
                     matches++;
                     currentMatches.push_back(std::make_pair(allRooms[j].roomXmlFile,allRooms[j].roomLogStartTime));
-                    matchesFound = true;
                 }
             }
 
             while (matches > maxInstances) // too many instances of this room
             {
-                ROS_INFO_STREAM("Observation "<<allRooms[i].roomXmlFile<<" has "<<matches<<" instances.");
+                matchesFound = true;
+                ROS_INFO_STREAM("Observation "<<currentMatches[0].first<<" has "<<matches<<" instances.");
                 // find oldest observations and remove them
 
                 std::string oldestRoomFile = currentMatches[0].first;
@@ -139,6 +139,7 @@ public:
                 QString roomXml(currentMatches[oldestIndex].first.c_str());
                 int lastIndex = roomXml.lastIndexOf("/");
                 QString observationFolderPath = roomXml.left(lastIndex);
+
                 if (!cache)
                 {
                     deleteFolderContents(observationFolderPath);
@@ -164,11 +165,17 @@ public:
 
                 // remove element from vector
                 currentMatches.erase(currentMatches.begin()+oldestIndex);
+//                if (oldestIndex == 0)
+//                {
+//                    break;
+//                }
+                matches--; // decrement match counter
             }
 
             // update list of rooms & metarooms
             if (matchesFound)
             {
+                createSummaryXML();
                 refresh();
                 allRooms = getRooms();
                 i=0;
