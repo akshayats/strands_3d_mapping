@@ -36,6 +36,7 @@ private:
     // intermediate room clouds
     std::vector<CloudPtr>                            m_vIntermediateRoomClouds;
     std::vector<tf::StampedTransform>                m_vIntermediateRoomCloudTransforms;
+    std::vector<tf::StampedTransform>                m_vIntermediateRoomCloudTransformsRegistered;
     std::vector<bool>                                m_vIntermediateRoomCloudsLoaded;
     std::vector<std::string>                         m_vIntermediateRoomCloudsFilenames;
     std::vector<image_geometry::PinholeCameraModel>  m_vIntermediateRoomCloudsCamParams;
@@ -103,6 +104,12 @@ public:
     {
         m_vIntermediateRoomClouds.clear();
         m_vIntermediateRoomCloudTransforms.clear();
+        m_vIntermediateRoomCloudTransformsRegistered.clear();
+    }
+
+    void addIntermediateRoomCloudRegisteredTransform(tf::StampedTransform cloud_reg_tf)
+    {
+        m_vIntermediateRoomCloudTransformsRegistered.push_back(cloud_reg_tf);
     }
 
     int addIntermediateRoomCloud(CloudPtr intermediateCloud, tf::StampedTransform cloud_tf, image_geometry::PinholeCameraModel cloudCamParams=image_geometry::PinholeCameraModel())
@@ -145,6 +152,11 @@ public:
     std::vector<tf::StampedTransform> getIntermediateCloudTransforms()
     {
         return m_vIntermediateRoomCloudTransforms;
+    }
+
+    std::vector<tf::StampedTransform> getIntermediateCloudTransformsRegistered()
+    {
+        return m_vIntermediateRoomCloudTransformsRegistered;
     }
 
     std::vector<image_geometry::PinholeCameraModel> getIntermediateCloudCameraParameters()
@@ -276,6 +288,13 @@ public:
         if (m_vIntermediateRoomCloudTransforms.size() != rhs.m_vIntermediateRoomCloudTransforms.size())
         {
             std::cout<<"Room intermediate cloud tranform vector sizes not equal"<<std::endl;
+            return false;
+        }
+
+
+        if (m_vIntermediateRoomCloudTransformsRegistered.size() != rhs.m_vIntermediateRoomCloudTransformsRegistered.size())
+        {
+            std::cout<<"Room intermediate cloud tranform registered vector sizes not equal"<<std::endl;
             return false;
         }
 

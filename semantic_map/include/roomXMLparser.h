@@ -35,6 +35,8 @@ public:
         std::string                     filename;
         tf::StampedTransform            transform;
         sensor_msgs::CameraInfo         camInfo;
+        tf::StampedTransform            regTransform;
+        bool                            hasRegTransform;
     };
 
 
@@ -242,6 +244,7 @@ public:
         xmlWriter->writeStartElement("RoomIntermediateClouds");
         std::vector<CloudPtr> roomIntermediateClouds = aRoom.getIntermediateClouds();
         std::vector<tf::StampedTransform> roomIntermediateCloudTransforms = aRoom.getIntermediateCloudTransforms();
+        std::vector<tf::StampedTransform> roomIntermediateCloudTransformsRegistered = aRoom.getIntermediateCloudTransformsRegistered();
         std::vector<image_geometry::PinholeCameraModel> roomIntermediateCloudCameraParameters = aRoom.getIntermediateCloudCameraParameters();
         std::vector<bool>   roomIntermediateCloudsLoaded = aRoom.getIntermediateCloudsLoaded();
         for (size_t i=0; i<roomIntermediateCloudTransforms.size(); i++)
@@ -322,6 +325,29 @@ public:
 
             //                ROS_INFO_STREAM("TF message "<<msg<<"\nStamp "<<msg.header.stamp.sec<<"."<<msg.header.stamp.nsec);
             xmlWriter->writeEndElement(); // RoomIntermediateCloudTransform
+
+            // RoomIntermediateCloudTransformRegistered
+
+            if (roomIntermediateCloudTransformsRegistered.size() == roomIntermediateCloudTransforms.size())
+            {
+                geometry_msgs::TransformStamped msg_reg;
+                tf::transformStampedTFToMsg(roomIntermediateCloudTransformsRegistered[i], msg_reg);
+
+                xmlWriter->writeStartElement("RoomIntermediateCloudTransformRegistered");
+                xmlWriter->writeAttribute("Stamp_sec",QString::number(msg_reg.header.stamp.sec));
+                xmlWriter->writeAttribute("Stamp_nsec",QString::number(msg_reg.header.stamp.nsec));
+                xmlWriter->writeAttribute("FrameId",QString(msg_reg.header.frame_id.c_str()));
+                xmlWriter->writeAttribute("ChildFrameId",QString(msg_reg.child_frame_id.c_str()));
+                xmlWriter->writeAttribute("Trans_x",QString::number(msg_reg.transform.translation.x));
+                xmlWriter->writeAttribute("Trans_y",QString::number(msg_reg.transform.translation.y));
+                xmlWriter->writeAttribute("Trans_z",QString::number(msg_reg.transform.translation.z));
+                xmlWriter->writeAttribute("Rot_w",QString::number(msg_reg.transform.rotation.w));
+                xmlWriter->writeAttribute("Rot_x",QString::number(msg_reg.transform.rotation.x));
+                xmlWriter->writeAttribute("Rot_y",QString::number(msg_reg.transform.rotation.y));
+                xmlWriter->writeAttribute("Rot_z",QString::number(msg_reg.transform.rotation.z));
+
+                xmlWriter->writeEndElement(); // RoomIntermediateCloudTransformRegistered
+            }
 
             Eigen::IOFormat CommaInitFmt(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", " << ", "");
             xmlWriter->writeStartElement("RoomIntermediateCameraParameters");
@@ -630,6 +656,11 @@ public:
                         aRoom.addIntermediateRoomCloud(intermediateCloudData.filename, intermediateCloudData.transform,aCameraModel);
                     }
 
+                    if (intermediateCloudData.hasRegTransform)
+                    {
+                        aRoom.addIntermediateRoomCloudRegisteredTransform(intermediateCloudData.regTransform);
+                    }
+
                 }
             }
         }
@@ -646,10 +677,15 @@ private:
     {
         tf::StampedTransform transform;
         geometry_msgs::TransformStamped tfmsg;
+        geometry_msgs::TransformStamped regTfmsg;
+//        tf::transformStampedTFToMsg(roomIntermediateCloudTransformsRegistered[i], msg_reg);
         sensor_msgs::CameraInfo camInfo;
         bool camInfoError = false;
+        bool regTfmsgError = false;
 
         IntermediateCloudData       structToRet;
+        structToRet.hasRegTransform = false;
+
         //        toRet.first = CloudPtr(new Cloud);
         QString intermediateParentNode("");
 
@@ -685,6 +721,16 @@ private:
                 {
                     int nsec = xmlReader.readElementText().toInt();
                     tfmsg.header.stamp.nsec = nsec;
+                }
+                if (xmlReader.name() == "FrameId")
+                {
+                    std::string frame_id = xmlReader.readElementText().toStdString();
+                    tfmsg.header.frame_id = frame_id;
+                }
+                if (xmlReader.name() == "ChildFrameId")
+                {
+                    std::string child_frame_id = xmlReader.readElementText().toStdString();
+                    tfmsg.child_frame_id = child_frame_id;
                 }
                 if (xmlReader.name() == "Translation")
                 {
@@ -736,6 +782,112 @@ private:
                     }
                 }
 
+
+                if (xmlReader.name() == "RoomIntermediateCloudTransformRegistered")
+                {
+
+                    QXmlStreamAttributes paramAttributes = xmlReader.attributes();
+                    if (paramAttributes.hasAttribute("Stamp_sec"))
+                    {
+                        QString val = paramAttributes.value("Stamp_sec").toString();
+                        regTfmsg.header.stamp.sec = val.toInt();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Stamp_sec attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Stamp_nsec"))
+                    {
+                        QString val = paramAttributes.value("Stamp_nsec").toString();
+                        regTfmsg.header.stamp.nsec = val.toInt();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Stamp_nsec attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("FrameId"))
+                    {
+                        QString val = paramAttributes.value("FrameId").toString();
+                        regTfmsg.header.frame_id = val.toStdString();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the FrameId attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("ChildFrameId"))
+                    {
+                        QString val = paramAttributes.value("ChildFrameId").toString();
+                        regTfmsg.child_frame_id = val.toStdString();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the ChildFrameId attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Trans_x"))
+                    {
+                        QString val = paramAttributes.value("Trans_x").toString();
+                        regTfmsg.transform.translation.x = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Trans_x attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Trans_y"))
+                    {
+                        QString val = paramAttributes.value("Trans_y").toString();
+                        regTfmsg.transform.translation.y = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Trans_y attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Trans_z"))
+                    {
+                        QString val = paramAttributes.value("Trans_z").toString();
+                        regTfmsg.transform.translation.z = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Trans_z attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Rot_w"))
+                    {
+                        QString val = paramAttributes.value("Rot_w").toString();
+                        regTfmsg.transform.rotation.w = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Rot_w attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Rot_x"))
+                    {
+                        QString val = paramAttributes.value("Rot_x").toString();
+                        regTfmsg.transform.rotation.x = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Rot_x attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Rot_y"))
+                    {
+                        QString val = paramAttributes.value("Rot_y").toString();
+                        regTfmsg.transform.rotation.y = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Rot_y attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+                    if (paramAttributes.hasAttribute("Rot_z"))
+                    {
+                        QString val = paramAttributes.value("Rot_z").toString();
+                        regTfmsg.transform.rotation.z = val.toDouble();
+
+                    } else {
+                        ROS_ERROR("RoomIntermediateCloudTransformRegistered xml node does not have the Rot_z attribute. Cannot construct the intermediate cloud registered transform.");
+                        regTfmsgError = true;
+                    }
+
+                }
                 // camera parameters
                 if (xmlReader.name() == "RoomIntermediateCameraParameters")
                 {
@@ -867,6 +1019,12 @@ private:
         if (!camInfoError)
         {
             structToRet.camInfo = camInfo;
+        }
+        if (!regTfmsgError)
+        {
+            tf::transformStampedMsgToTF(regTfmsg, structToRet.regTransform);
+        } else {
+            structToRet.hasRegTransform = false;
         }
         tf::transformStampedMsgToTF(tfmsg, transform);
         structToRet.transform = transform;
