@@ -87,8 +87,8 @@ public:
     boost::shared_ptr<image_transport::ImageTransport>                          m_RGB_it, m_Depth_it;
 
     // fine mapping
-    std::vector<scan* >                                                         m_vAllScans;
-    std::vector<CloudPtr>                                                       m_vAllClouds; // local frame of reference
+//    std::vector<scan* >                                                         m_vAllScans;
+//    std::vector<CloudPtr>                                                       m_vAllClouds; // local frame of reference
 
 private:
 
@@ -509,24 +509,6 @@ void CloudMergeNode<PointType>::controlCallback(const std_msgs::String& controlS
                 m_TransformListener.lookupTransform("/map", transformed_cloud->header.frame_id,
                                                     temp_msg.header.stamp, transform);
 
-
-                // convert to fine mapping datatypes
-		/*
-                Eigen::Matrix4f eigen_transform;
-                Eigen::Matrix3f eigen_rot;
-                Eigen::Vector3f eigen_translation;
-                Eigen::Matrix3f eigen_K;
-                image_geometry::PinholeCameraModel aCameraModel;
-                aCameraModel.fromCameraInfo(m_CloudMerge.m_IntermediateFilteredDepthCamInfo);
-                pcl_ros::transformAsMatrix (transform, eigen_transform);
-                eigen_rot = eigen_transform.topLeftCorner<3, 3>();
-                eigen_translation = eigen_transform.block<3, 1>(0, 3);
-                cv2eigen(aCameraModel.intrinsicMatrix(),eigen_K);
-                CloudPtr scan_cloud;
-                *scan_cloud= *transformed_cloud;
-		*/
-                //m_vAllScans.push_back(new scan(*scan_cloud, eigen_translation,eigen_rot,eigen_K));
-                //m_vAllClouds.push_back(scan_cloud);
 
                 // add intermediate cloud (local frame of ref) and transform to semantic room
                 int intCloudId;
