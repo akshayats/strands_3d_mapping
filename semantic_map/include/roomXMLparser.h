@@ -45,6 +45,8 @@ public:
         if (rootFolder == "home")
         {
             m_RootFolder =(QDir::homePath() + QString("/.semanticMap/"));
+        } else {
+            m_RootFolder = rootFolder.c_str();
         }
 
         // create root folder
@@ -785,7 +787,6 @@ private:
 
                 if (xmlReader.name() == "RoomIntermediateCloudTransformRegistered")
                 {
-
                     QXmlStreamAttributes paramAttributes = xmlReader.attributes();
                     if (paramAttributes.hasAttribute("Stamp_sec"))
                     {
@@ -1023,6 +1024,7 @@ private:
         if (!regTfmsgError)
         {
             tf::transformStampedMsgToTF(regTfmsg, structToRet.regTransform);
+            structToRet.hasRegTransform = true;
         } else {
             structToRet.hasRegTransform = false;
         }

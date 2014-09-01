@@ -30,7 +30,7 @@ public:
 
         if ((cameraParameters.size() != cloudTransforms.size()) || (cameraParameters.size() != clouds.size()) || (clouds.size() != cloudTransforms.size()))
         {
-            ROS_ERROR("Cannot register individual points clouds for room "<<aRoom.getRoomLogName()<<"  as the sizes of the camera parameters, transforms and individual point cloud vectors are not equal.");
+            ROS_INFO_STREAM("Cannot register individual points clouds for room "<<aRoom.getRoomLogName()<<"  as the sizes of the camera parameters, transforms and individual point cloud vectors are not equal.");
             return false;
         }
 
@@ -53,8 +53,32 @@ public:
         fine_mapping f(allScans);
         f.build_graph();
         f.optimize_graph();
-        stitched_map map(allScans);
-        map.visualize(true);
+//        stitched_map map(allScans);
+//        map.visualize(true);
+        for (size_t i=0; i<allScans.size();i++)
+        {
+            Eigen::Matrix3f R;
+            Eigen::Vector3f t;
+            allScans[i]->get_transform(R, t);
+
+            tf::Matrix3x3 tfbasis;
+            tf::Vector3 tforigin;
+            for (size_t i = 0; i < 3; ++i) {
+                tforigin.m_floats[i] = t(i);
+            }
+            for (size_t i = 0; i < 3; ++i) {
+                for (size_t j = 0; j < 3; ++j) {
+                    tfbasis[i].m_floats[j] = R(i, j);
+                }
+            }
+
+            tf::StampedTransform transform = cloudTransforms[i];
+            transform.setBasis(tfbasis);
+            transform.setOrigin(tforigin);
+
+            aRoom.addIntermediateRoomCloudRegisteredTransform(transform);
+
+        }
     }
 
 private:

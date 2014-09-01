@@ -41,7 +41,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
-   DEPENDS cloud_register
+   DEPENDS cloud_register mapping_refinement
 )
 
 include_directories(include
