@@ -9,8 +9,8 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    SimpleSummaryParser<PointType> summary_parser("/home/rares/data/test_parser/index.xml");
-    summary_parser.createSummaryXML("/home/rares/data/test_parser/");
+    SimpleSummaryParser<PointType> summary_parser("/home/cvapdemo/Data/index.xml");
+    summary_parser.createSummaryXML("/home/cvapdemo/Data/");
 
     SimpleXMLParser<PointType> simple_parser;
     SimpleXMLParser<PointType>::RoomData roomData;
@@ -23,6 +23,8 @@ int main(int argc, char** argv)
 
         roomData = simple_parser.loadRoomFromXML(allSweeps[i].roomXmlFile);
         cout<<"Complete cloud size "<<roomData.completeRoomCloud->points.size()<<endl;
+        cout<<"Room waypoint id "<<roomData.roomWaypointId<<std::endl;
+
         for (size_t i=0; i<roomData.vIntermediateRoomClouds.size(); i++)
         {
             cout<<"Intermediate cloud size "<<roomData.vIntermediateRoomClouds[i]->points.size()<<endl;

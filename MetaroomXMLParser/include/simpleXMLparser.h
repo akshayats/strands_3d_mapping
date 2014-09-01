@@ -41,6 +41,7 @@ public:
         std::vector<cv::Mat>                             vIntermediateRGBImages; // type CV_8UC3
         std::vector<cv::Mat>                             vIntermediateDepthImages; // type CV_16UC1
         CloudPtr                                         completeRoomCloud;
+        std::string                                      roomWaypointId;
 
         RoomData(){
             completeRoomCloud = CloudPtr(new Cloud());
@@ -141,7 +142,11 @@ public:
                         return aRoom;
                     }
                 }
-
+                if (xmlReader->name() == "RoomStringId")
+                {
+                    QString roomWaypointId = xmlReader->readElementText();
+                    aRoom.roomWaypointId = roomWaypointId.toStdString();
+                }
 
                 if (xmlReader->name() == "RoomIntermediateCloud")
                 {
