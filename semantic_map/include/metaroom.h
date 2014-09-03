@@ -433,6 +433,10 @@ public:
             // filter down metaroom point cloud
             CloudPtr cloud_filtered = MetaRoom<PointType>::downsampleCloud(this->getCompleteRoomCloud()->makeShared());
 
+            std::vector<int> indices;
+            pcl::removeNaNFromPointCloud(*cloud_filtered,*cloud_filtered, indices);
+
+
             this->setDeNoisedRoomCloud(cloud_filtered);
             this->setInteriorRoomCloud(cloud_filtered);
 
@@ -475,6 +479,9 @@ public:
 
             // extract noise and re-align rooms (hoping to get a better alignment without the noise outside the walls).
             CloudPtr roomDownsampledCloud = MetaRoom<PointType>::downsampleCloud(transformedRoomCloud);
+
+            std::vector<int> indices;
+            pcl::removeNaNFromPointCloud(*roomDownsampledCloud,*roomDownsampledCloud, indices);
 
             aRoom.setDeNoisedRoomCloud(roomDownsampledCloud);
 

@@ -148,7 +148,7 @@ public:
         if (aRoom.getCompleteRoomCloudLoaded()) // only save the cloud file if it's been loaded
         {
             QFile file(completeCloudFilename);
-            if (!file.exists())
+//            if (!file.exists())
             {
                 if (aRoom.getCompleteRoomCloud()->points.size()>0)
                 {
@@ -683,7 +683,7 @@ private:
 //        tf::transformStampedTFToMsg(roomIntermediateCloudTransformsRegistered[i], msg_reg);
         sensor_msgs::CameraInfo camInfo;
         bool camInfoError = false;
-        bool regTfmsgError = false;
+        bool regTfmsgError = true;
 
         IntermediateCloudData       structToRet;
         structToRet.hasRegTransform = false;
@@ -787,6 +787,7 @@ private:
 
                 if (xmlReader.name() == "RoomIntermediateCloudTransformRegistered")
                 {
+                    regTfmsgError = false;
                     QXmlStreamAttributes paramAttributes = xmlReader.attributes();
                     if (paramAttributes.hasAttribute("Stamp_sec"))
                     {
