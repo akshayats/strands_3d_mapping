@@ -433,17 +433,19 @@ public:
             // filter down metaroom point cloud
             CloudPtr cloud_filtered = MetaRoom<PointType>::downsampleCloud(this->getCompleteRoomCloud()->makeShared());
 
-            std::vector<int> indices;
-            pcl::removeNaNFromPointCloud(*cloud_filtered,*cloud_filtered, indices);
-
-
             this->setDeNoisedRoomCloud(cloud_filtered);
             this->setInteriorRoomCloud(cloud_filtered);
 
             aRoom.setDeNoisedRoomCloud(cloud_filtered);
             aRoom.setInteriorRoomCloud(cloud_filtered);
 
-            SemanticRoomXMLParser<PointType> parser;
+
+            // save room in the correct folder
+            QString roomXml(aRoom.getCompleteRoomCloudFilename().c_str());
+            int date = roomXml.indexOf("201");
+            QString rootFolderPath = roomXml.left(date);
+            ROS_INFO_STREAM("Initializeing room xml parser with root folder "<<rootFolderPath.toStdString());
+            SemanticRoomXMLParser<PointType> parser(rootFolderPath.toStdString());
             parser.saveRoomAsXML(aRoom);
 
 
@@ -480,9 +482,6 @@ public:
             // extract noise and re-align rooms (hoping to get a better alignment without the noise outside the walls).
             CloudPtr roomDownsampledCloud = MetaRoom<PointType>::downsampleCloud(transformedRoomCloud);
 
-            std::vector<int> indices;
-            pcl::removeNaNFromPointCloud(*roomDownsampledCloud,*roomDownsampledCloud, indices);
-
             aRoom.setDeNoisedRoomCloud(roomDownsampledCloud);
 
             aRoom.setRoomTransform(finalTransform);
@@ -490,8 +489,14 @@ public:
             // Update room XML file to reflect new transformation, and new point clouds
             ROS_INFO_STREAM("Updating room xml with new transform to metaroom.");
             aRoom.setInteriorRoomCloud(roomDownsampledCloud);
-            SemanticRoomXMLParser<PointType> parser;
+
+
+            QString roomXml(aRoom.getCompleteRoomCloudFilename().c_str());
+            int date = roomXml.indexOf("201");
+            QString rootFolderPath = roomXml.left(date);
+            SemanticRoomXMLParser<PointType> parser(rootFolderPath.toStdString());
             parser.saveRoomAsXML(aRoom);
+
 
         }
 
