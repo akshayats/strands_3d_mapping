@@ -466,6 +466,7 @@ public:
 
 
         // check if semantic room needs to be transformed into the metaroom frame of reference
+//        aRoom.resetRoomTransform();
         Eigen::Matrix4f roomTransform = aRoom.getRoomTransform();
         if (roomTransform == Eigen::Matrix4f::Identity())
         { // identity transform -> needs to be updated
@@ -547,8 +548,8 @@ public:
             sor.filter (*differenceMetaRoomToRoomFiltered);
 
             // Cluster objects
-            std::vector<CloudPtr> vDifferenceMetaRoomToRoomClusters = this->clusterPointCloud(differenceMetaRoomToRoomFiltered,0.05,65,100000);
-            std::vector<CloudPtr> vDifferenceRoomToMetaRoomClusters = this->clusterPointCloud(differenceRoomToMetaRoomFiltered,0.05,65,100000);
+            std::vector<CloudPtr> vDifferenceMetaRoomToRoomClusters = this->clusterPointCloud(differenceMetaRoomToRoomFiltered,0.05,5,100000);
+            std::vector<CloudPtr> vDifferenceRoomToMetaRoomClusters = this->clusterPointCloud(differenceRoomToMetaRoomFiltered,0.05,5,100000);
 
 
             // filter clusters based on distance
@@ -664,7 +665,7 @@ public:
         }
     }
 
-    static CloudPtr downsampleCloud(CloudPtr input, double leafSize = 0.01f)
+    static CloudPtr downsampleCloud(CloudPtr input, double leafSize = 0.03f)
     {
         ROS_INFO_STREAM("PointCloud before filtering has: " << input->points.size () << " data points.");
 
