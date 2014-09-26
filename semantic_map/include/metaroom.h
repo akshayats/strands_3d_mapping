@@ -15,6 +15,8 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/segment_differences.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/octree/octree.h>
+#include <pcl/octree/octree_impl.h>
 #include <vector>
 
 #include "ros/time.h"
@@ -29,6 +31,7 @@
 #include "constants.h"
 #include "roomXMLparser.h"
 #include "occlusionChecker.h"
+#include "plane_detector.h"
 
 template <class PointType>
 class MetaRoom : public RoomBase<PointType> {
@@ -37,6 +40,7 @@ public:
     typedef pcl::PointCloud<PointType> Cloud;
     typedef typename Cloud::Ptr CloudPtr;
     typedef pcl::search::KdTree<PointType> Tree;
+    typedef std::vector<PointType, Eigen::aligned_allocator<PointType> > AlignedPointTVector;
 
     struct MetaRoomUpdateIteration
     {
@@ -409,6 +413,8 @@ public:
 
     bool    updateMetaRoom(SemanticRoom<PointType>& aRoom)
     {
+//        static CloudPtr mr_bounding_cloud(new Cloud());
+
         // check if meta room is initialized
         if (!this->m_CompleteRoomCloudLoaded && this->m_CompleteRoomCloudFilename == "")
         {
@@ -433,11 +439,52 @@ public:
             // filter down metaroom point cloud
             CloudPtr cloud_filtered = MetaRoom<PointType>::downsampleCloud(this->getCompleteRoomCloud()->makeShared());
 
+
+            /******************************************** PLANE DETECTION ***********************************************************/
+//            CloudPtr mrBB(new Cloud());
+//            *mrBB = *this->getCompleteRoomCloud();
+//            CloudPtr mvBB_filtered = PlaneDetector<PointType>::downsampleCloud(mrBB);
+//            CloudPtr bounding_cloud (new Cloud());
+//            PlaneDetector<PointType> aPlaneDetector(mvBB_filtered);
+
+//            // Ground plane
+//            {
+//                CloudPtr cloud_plane  = aPlaneDetector.detectGroundPlane();
+//                *bounding_cloud += *cloud_plane;
+//            }
+
+//            // Ceiling plane
+//            {
+//                CloudPtr cloud_plane  = aPlaneDetector.detectCeilingPlane();
+//                // detect planes from the ceiling cloud
+//                std::vector<pcl::ModelCoefficients::Ptr> boundingPlanes = aPlaneDetector.getBoundingPlanes();
+//                // ceiling is the 2nd item in the vector -> HACK
+//                CloudPtr thin_ceiling = PlaneDetector<PointType>::extractPlane(cloud_plane, boundingPlanes[1], 0.05);
+//                *bounding_cloud += *thin_ceiling;
+//            }
+
+//            // Walls
+//            std::pair<CloudPtr,CloudPtr> clouds = aPlaneDetector.detectWalls();
+//            *bounding_cloud += *clouds.second;
+
+
+//            *mr_bounding_cloud = *bounding_cloud;
+
+//            std::vector<pcl::ModelCoefficients::Ptr> boundingPlanes = aPlaneDetector.getBoundingPlanes();
+//            std::vector<bool> boundingPlanesDirections = aPlaneDetector.getBoundingPlanesDirections();
+
+//            this->setWallPrimitives(boundingPlanes,boundingPlanesDirections);
+//            *cloud_filtered = *clouds.first;
+//            cloud_filtered = MetaRoom<PointType>::downsampleCloud(clouds.first);
+            /******************************************** PLANE DETECTION ***********************************************************/
+
+
+
             this->setDeNoisedRoomCloud(cloud_filtered);
             this->setInteriorRoomCloud(cloud_filtered);
-
             aRoom.setDeNoisedRoomCloud(cloud_filtered);
             aRoom.setInteriorRoomCloud(cloud_filtered);
+
 
 
             // save room in the correct folder
@@ -466,7 +513,7 @@ public:
 
 
         // check if semantic room needs to be transformed into the metaroom frame of reference
-//        aRoom.resetRoomTransform();
+        aRoom.resetRoomTransform();
         Eigen::Matrix4f roomTransform = aRoom.getRoomTransform();
         if (roomTransform == Eigen::Matrix4f::Identity())
         { // identity transform -> needs to be updated
@@ -476,13 +523,57 @@ public:
             CloudPtr roomCloud = aRoom.getCompleteRoomCloud();
 
             CloudPtr transformedRoomCloud(new Cloud);
+            CloudPtr interiorRoomCloud(new Cloud());
             transformedRoomCloud = NdtRegistration<PointType>::registerClouds(roomCloud, this->getCompleteRoomCloud(),finalTransform);
+
+            // Use room boundary for plane detection
+            /******************************************** PLANE DETECTION ***********************************************************/
+//            {
+//                CloudPtr rBB(new Cloud());
+//                *rBB = *roomCloud;
+//                CloudPtr rBB_filtered = PlaneDetector<PointType>::downsampleCloud(rBB);
+//                CloudPtr bounding_cloud (new Cloud());
+//                PlaneDetector<PointType> aPlaneDetector(rBB_filtered);
+
+//                // Ground plane
+//                {
+//                    CloudPtr cloud_plane  = aPlaneDetector.detectGroundPlane();
+//                    *bounding_cloud += *cloud_plane;
+//                }
+
+//                // Ceiling plane
+//                {
+//                    CloudPtr cloud_plane  = aPlaneDetector.detectCeilingPlane();
+//                    // detect planes from the ceiling cloud
+//                    std::vector<pcl::ModelCoefficients::Ptr> boundingPlanes = aPlaneDetector.getBoundingPlanes();
+//                    // ceiling is the 2nd item in the vector -> HACK
+//                    CloudPtr thin_ceiling = PlaneDetector<PointType>::extractPlane(cloud_plane, boundingPlanes[1], 0.05);
+//                    *bounding_cloud += *thin_ceiling;
+//                }
+
+//                // Walls
+//                std::pair<CloudPtr,CloudPtr> clouds = aPlaneDetector.detectWalls();
+//                *bounding_cloud += *clouds.second;
+
+//                *interiorRoomCloud = *clouds.first;
+
+//                std::vector<pcl::ModelCoefficients::Ptr> boundingPlanes = aPlaneDetector.getBoundingPlanes();
+//                std::vector<bool> boundingPlanesDirections = aPlaneDetector.getBoundingPlanesDirections();
+
+//                transformedRoomCloud = NdtRegistration<PointType>::registerClouds(bounding_cloud, mr_bounding_cloud, finalTransform);
+
+//                pcl::transformPointCloud (*interiorRoomCloud, *transformedRoomCloud, finalTransform);
+
+//            }
+            /******************************************** PLANE DETECTION ***********************************************************/
+
 
             ROS_INFO_STREAM("Room alignment complete.");
 
             // extract noise and re-align rooms (hoping to get a better alignment without the noise outside the walls).
-            CloudPtr roomDownsampledCloud = MetaRoom<PointType>::downsampleCloud(transformedRoomCloud);
-
+            CloudPtr roomDownsampledCloud(new Cloud());
+            roomDownsampledCloud = MetaRoom<PointType>::downsampleCloud(transformedRoomCloud);
+//            *roomDownsampledCloud = *transformedRoomCloud;
             aRoom.setDeNoisedRoomCloud(roomDownsampledCloud);
 
             aRoom.setRoomTransform(finalTransform);
@@ -538,56 +629,71 @@ public:
             segment.segment(*differenceRoomToMetaRoom);
 
             // apply a statistical noise removal filter
-            pcl::StatisticalOutlierRemoval<PointType> sor;
-            sor.setInputCloud (differenceRoomToMetaRoom);
-            sor.setMeanK (50);
-            sor.setStddevMulThresh (1.0);
-            sor.filter (*differenceRoomToMetaRoomFiltered);
+//            pcl::StatisticalOutlierRemoval<PointType> sor;
+//            sor.setInputCloud (differenceRoomToMetaRoom);
+//            sor.setMeanK (50);
+//            sor.setStddevMulThresh (1.0);
+//            sor.filter (*differenceRoomToMetaRoomFiltered);
 
-            sor.setInputCloud (differenceMetaRoomToRoom);
-            sor.filter (*differenceMetaRoomToRoomFiltered);
+//            sor.setInputCloud (differenceMetaRoomToRoom);
+//            sor.filter (*differenceMetaRoomToRoomFiltered);
+            *differenceRoomToMetaRoomFiltered = *differenceRoomToMetaRoom;
+            *differenceMetaRoomToRoomFiltered = *differenceMetaRoomToRoom;
 
             // Cluster objects
-            std::vector<CloudPtr> vDifferenceMetaRoomToRoomClusters = this->clusterPointCloud(differenceMetaRoomToRoomFiltered,0.05,5,100000);
-            std::vector<CloudPtr> vDifferenceRoomToMetaRoomClusters = this->clusterPointCloud(differenceRoomToMetaRoomFiltered,0.05,5,100000);
+//            std::vector<CloudPtr> vDifferenceMetaRoomToRoomClusters = this->clusterPointCloud(differenceMetaRoomToRoomFiltered,0.05,5,100000);
+//            std::vector<CloudPtr> vDifferenceRoomToMetaRoomClusters = this->clusterPointCloud(differenceRoomToMetaRoomFiltered,0.05,5,100000);
 
 
-            // filter clusters based on distance
-            double maxDistance = 3.0; // max of 3 meters
-            this->filterClustersBasedOnDistance(vDifferenceRoomToMetaRoomClusters, maxDistance);
-            this->filterClustersBasedOnDistance(vDifferenceMetaRoomToRoomClusters, maxDistance);
+//            // filter clusters based on distance
+//            double maxDistance = 3.0; // max of 3 meters
+//            this->filterClustersBasedOnDistance(vDifferenceRoomToMetaRoomClusters, maxDistance);
+//            this->filterClustersBasedOnDistance(vDifferenceMetaRoomToRoomClusters, maxDistance);
 
-            // check cluster occlusions
+//            // check cluster occlusions
+//            OcclusionChecker<PointType> occlusionChecker;
+//            occlusionChecker.setSensorOrigin(m_SensorOrigin);
+//            std::vector<CloudPtr> clustersToBeAdded = occlusionChecker.checkOcclusions(vDifferenceMetaRoomToRoomClusters, vDifferenceRoomToMetaRoomClusters);
+//            ROS_INFO_STREAM("Finished checking occlusions.");
+
+//            // add all the clusters together for subtraction
+//            int pointsAdded =0, pointsRemoved = 0;
+//            CloudPtr allClusters(new Cloud());
+//            for (size_t i=0; i<vDifferenceMetaRoomToRoomClusters.size();i++)
+//            {
+//                *allClusters += *vDifferenceMetaRoomToRoomClusters[i];
+//                pointsRemoved += vDifferenceMetaRoomToRoomClusters[i]->points.size();
+//            }
+
+//            // update metaroom by subracting the difference to the room
+//            CloudPtr updatedMetaRoomCloud(new Cloud());
+//            segment.setInputCloud(this->getInteriorRoomCloud());
+//            segment.setTargetCloud(allClusters);
+//            segment.segment(*updatedMetaRoomCloud);
+
+//            CloudPtr cloudToBeAdded(new Cloud());
+//            // add ocluded clusters from the room
+//            for (size_t i=0; i<clustersToBeAdded.size(); i++)
+//            {
+//                *cloudToBeAdded += *clustersToBeAdded[i];
+//                pointsAdded += clustersToBeAdded[i]->points.size();
+//            }
+//            *updatedMetaRoomCloud += *cloudToBeAdded;
+
+//            ROS_INFO_STREAM("Metaroom update. Points removed: "<<pointsRemoved<<"   Points added: "<<pointsAdded);
+
             OcclusionChecker<PointType> occlusionChecker;
             occlusionChecker.setSensorOrigin(m_SensorOrigin);
-            std::vector<CloudPtr> clustersToBeAdded = occlusionChecker.checkOcclusions(vDifferenceMetaRoomToRoomClusters, vDifferenceRoomToMetaRoomClusters);
-            ROS_INFO_STREAM("Finished checking occlusions.");
+            typename OcclusionChecker<PointType>::occluded_points occlusions;
+            occlusions = occlusionChecker.checkOcclusions(differenceMetaRoomToRoom,differenceRoomToMetaRoom );
 
-            // add all the clusters together for subtraction
-            int pointsAdded =0, pointsRemoved = 0;
-            CloudPtr allClusters(new Cloud());
-            for (size_t i=0; i<vDifferenceMetaRoomToRoomClusters.size();i++)
-            {
-                *allClusters += *vDifferenceMetaRoomToRoomClusters[i];
-                pointsRemoved += vDifferenceMetaRoomToRoomClusters[i]->points.size();
-            }
-
-            // update metaroom by subracting the difference to the room
             CloudPtr updatedMetaRoomCloud(new Cloud());
             segment.setInputCloud(this->getInteriorRoomCloud());
-            segment.setTargetCloud(allClusters);
+            segment.setTargetCloud(occlusions.toBeRemoved);
             segment.segment(*updatedMetaRoomCloud);
+            *updatedMetaRoomCloud += *occlusions.toBeAdded;
+            ROS_INFO_STREAM("Metaroom update. Points removed: "<<occlusions.toBeRemoved->points.size()<<"   Points added: "<<occlusions.toBeAdded->points.size());
 
-            CloudPtr cloudToBeAdded(new Cloud());
-            // add ocluded clusters from the room
-            for (size_t i=0; i<clustersToBeAdded.size(); i++)
-            {
-                *cloudToBeAdded += *clustersToBeAdded[i];
-                pointsAdded += clustersToBeAdded[i]->points.size();
-            }
-            *updatedMetaRoomCloud += *cloudToBeAdded;
-
-            ROS_INFO_STREAM("Metaroom update. Points removed: "<<pointsRemoved<<"   Points added: "<<pointsAdded);
             this->setInteriorRoomCloud(updatedMetaRoomCloud);
 
             if (m_bSaveIntermediateSteps)
@@ -599,8 +705,10 @@ public:
                     updateIteration.roomRunNumber = aRoom.getRoomRunNumber();
                     updateIteration.setDifferenceMetaRoomToRoom(differenceMetaRoomToRoomFiltered);
                     updateIteration.setDifferenceRoomToMetaRoom(differenceRoomToMetaRoomFiltered);
-                    updateIteration.setClustersToBeAdded(cloudToBeAdded);
-                    updateIteration.setClustersToBeRemoved(allClusters);
+//                    updateIteration.setClustersToBeAdded(cloudToBeAdded);
+//                    updateIteration.setClustersToBeRemoved(allClusters);
+                    updateIteration.setClustersToBeAdded(occlusions.toBeAdded);
+                    updateIteration.setClustersToBeRemoved(occlusions.toBeRemoved);
                     updateIteration.setMetaRoomInteriorCloud(updatedMetaRoomCloud);
                     m_MetaRoomUpdateIterations.push_back(updateIteration);
                 }
@@ -675,6 +783,27 @@ public:
         vg.setInputCloud (input);
         vg.setLeafSize (leafSize, leafSize, leafSize);
         vg.filter (*cloud_filtered);
+        ROS_INFO_STREAM("PointCloud after filtering has: " << cloud_filtered->points.size ()  << " data points.");
+
+        return cloud_filtered;
+    }
+
+    static CloudPtr downsampleCloudOctree(CloudPtr input, double leafSize = 0.03f)
+    {
+        ROS_INFO_STREAM("PointCloud before filtering has: " << input->points.size () << " data points.");
+
+        // Create the filtering object: downsample the dataset using a leaf size of 1cm
+        pcl::octree::OctreePointCloudDensity<PointType> octree(0.03);
+        octree.setInputCloud(input);
+        octree.addPointsFromInputCloud();
+
+        CloudPtr cloud_filtered (new Cloud);
+        AlignedPointTVector leaves;
+        int occupied_voxels =octree.getOccupiedVoxelCenters(leaves);
+        for (size_t i=0; i<leaves.size();i++)
+        {
+                cloud_filtered->points.push_back(leaves[i]);
+        }
         ROS_INFO_STREAM("PointCloud after filtering has: " << cloud_filtered->points.size ()  << " data points.");
 
         return cloud_filtered;

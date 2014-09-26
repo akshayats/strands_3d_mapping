@@ -151,17 +151,17 @@ public:
 
     std::vector<tf::StampedTransform> getIntermediateCloudTransforms()
     {
-        return m_vIntermediateRoomCloudTransforms;
+      return m_vIntermediateRoomCloudTransforms;
     }
 
     std::vector<tf::StampedTransform> getIntermediateCloudTransformsRegistered()
     {
-        return m_vIntermediateRoomCloudTransformsRegistered;
+      return m_vIntermediateRoomCloudTransformsRegistered;
     }
 
     std::vector<image_geometry::PinholeCameraModel> getIntermediateCloudCameraParameters()
     {
-        return m_vIntermediateRoomCloudsCamParams;
+      return m_vIntermediateRoomCloudsCamParams;
     }
 
     std::vector<bool>   getIntermediateCloudsLoaded()

@@ -61,6 +61,7 @@ set(HDRS
     include/semanticMapSummaryParser.h
     include/occlusionChecker.h
     include/roomRegistration.h
+    include/plane_detector.h
 )
 
 set(SRCS
@@ -72,6 +73,7 @@ set(SRCS
     src/semanticMapSummaryParser.cpp
     src/occlusionChecker.cpp
     src/roomRegistration.cpp
+    src/plane_detector.cpp
 )
 
 add_library(semantic_map ${HDRS} ${SRCS})

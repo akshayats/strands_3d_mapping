@@ -1,5 +1,5 @@
-#ifndef __SEMANTIC_MAP_SUMMARY_PARSER__H
-#define __SEMANTIC_MAP_SUMMARY_PARSER__H
+#ifndef __SIMPLE_SUMMARY_PARSER__H
+#define __SIMPLE_SUMMARY_PARSER__H
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
