@@ -141,9 +141,17 @@ void SimpleSummaryParser::saveSemanticRooms(QXmlStreamWriter* xmlWriter, QString
 
         QXmlStreamReader* xmlReader = new QXmlStreamReader(&file);
         QXmlStreamReader::TokenType token = xmlReader->readNext();
-        while (token != QXmlStreamReader::StartElement)
+        int max_token = 15;
+        int current_token=0;
+        while ((token != QXmlStreamReader::StartElement) && (current_token<max_token))
         {
+            current_token++;
             token = xmlReader->readNext();
+        }
+
+        if (current_token > max_token)
+        {
+            continue;
         }
 
         if (xmlReader->name() == "SemanticRoom")
