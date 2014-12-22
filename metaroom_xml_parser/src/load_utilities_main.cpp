@@ -137,4 +137,22 @@ int main(int argc, char** argv)
 ////            waitKey(0);                                          // Wait for a keystroke in the window
 ////        }
 //    }
+
+    auto dynamicClusters = semantic_map_load_utilties::loadDynamicClustersFromMultipleSweeps<PointType>("/home/rares/Data/test_metaroom_data", true);
+
+    for (size_t i=0; i<dynamicClusters.size(); i++)
+    {
+        for (size_t j=0; j<dynamicClusters[i].size(); j++)
+        {
+            {
+                std::stringstream ss;
+                ss << "clusters";
+                ss<<i;
+                ss<<"_";
+                ss<<j;
+                ss <<".pcd";
+                pcl::io::savePCDFileBinary(ss.str(), *dynamicClusters[i][j]);
+            }
+        }
+    }
 }
