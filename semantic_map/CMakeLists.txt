@@ -65,6 +65,8 @@ set(HDRS
     include/semantic_map/ndt_registration.h
     include/semantic_map/reg_features.h
     include/semantic_map/reg_transforms.h
+    include/semantic_map/dynamic_object.h
+    include/semantic_map/dynamic_object_xml_parser.h
 )
 
 set(HDRS_IMPL
@@ -88,6 +90,8 @@ set(SRCS
     src/ndt_registration.cpp
     src/reg_features.cpp
     src/reg_transforms.cpp
+    src/dynamic_object.cpp
+    src/dynamic_object_xml_parser.cpp
 )
 
 add_library(semantic_map ${HDRS} ${HDRS_IMPL} ${SRCS})
