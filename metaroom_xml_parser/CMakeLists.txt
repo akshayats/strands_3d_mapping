@@ -4,7 +4,7 @@ project(metaroom_xml_parser)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs sensor_msgs qt_build image_geometry tf)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs sensor_msgs qt_build image_geometry tf semantic_map)
 
 set(CMAKE_CXX_FLAGS "-O4 -g -fPIC -std=c++0x -fpermissive")
 
@@ -19,6 +19,7 @@ catkin_package(
    INCLUDE_DIRS include
    LIBRARIES metaroom_xml_parser
    DEPENDS qt_build image_geometry libqt4-dev
+   CATKIN_DEPENDS semantic_map
 )
 
 include_directories(include
@@ -58,6 +59,15 @@ add_executable(load_single_file src/load_single_file_main.cpp )
 add_executable(load_multiple_files src/load_multiple_files_main.cpp)
 
  target_link_libraries(load_multiple_files
+   ${catkin_LIBRARIES}
+   ${PCL_LIBRARIES}
+   ${QT_LIBRARIES}
+   metaroom_xml_parser
+ )
+
+add_executable(load_labelled_data src/load_labelled_data.cpp)
+
+ target_link_libraries(load_labelled_data
    ${catkin_LIBRARIES}
    ${PCL_LIBRARIES}
    ${QT_LIBRARIES}

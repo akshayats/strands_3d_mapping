@@ -3,6 +3,8 @@
 
 #include "simple_summary_parser.h"
 #include "simple_xml_parser.h"
+#include <semantic_map/dynamic_object_xml_parser.h>
+#include <semantic_map/room_xml_parser.h>
 
 #include <pcl/segmentation/segment_differences.h>
 #include <pcl/segmentation/extract_clusters.h>
@@ -77,6 +79,60 @@ namespace semantic_map_load_utilties
 
     template <class PointType>
     std::vector<std::vector<boost::shared_ptr<pcl::PointCloud<PointType>>>> loadDynamicClustersForTopologicalWaypoint(std::string folderPath, std::string waypoint,bool verbose=false, double tolerance = 0.05, int min_cluster_size = 75, int max_cluster_size=50000);
+
+    /************************************************ LABELLED DATA **************************************************************************************************/
+    template <class PointType>
+    struct LabelledData
+    {
+        boost::shared_ptr<pcl::PointCloud<PointType>>               completeCloud;
+        tf::StampedTransform                                        transformToGlobal;
+        tf::Vector3                                                 sweepCenter;
+        std::vector<DynamicObject::Ptr>                             labelledObjects;
+        boost::posix_time::ptime                                    sweepTime;
+        std::string                                                 waypoint;
+
+    };
+
+    template <class PointType>
+    LabelledData<PointType> loadLabelledDataFromSingleSweep(std::string sweepXmlPath, bool verbose = false)
+    {
+        LabelledData<PointType> toRet;
+        SemanticRoom<PointType> aRoom = SemanticRoomXMLParser<PointType>::loadRoomFromXML(sweepXmlPath,false);
+        toRet.completeCloud = aRoom.getCompleteRoomCloud();
+
+        unsigned found = sweepXmlPath.find_last_of("/");
+        std::string base_path = sweepXmlPath.substr(0,found+1);
+        QStringList xmlFiles = QDir(base_path.c_str()).entryList(QStringList("*label*.xml"));
+
+        if (verbose)
+        {
+            std::cout<<"Found "<<xmlFiles.size()<<" labelled objects."<<std::endl;
+        }
+
+        if (xmlFiles.size() == 0)
+        {
+           return;
+        }
+
+        // load labelled objects
+        DynamicObjectXMLParser parser;
+        for (size_t k=0; k<xmlFiles.size(); k++)
+        {
+           DynamicObject::Ptr parsed = parser.loadFromXML(base_path+xmlFiles[k].toStdString());
+           toRet.labelledObjects.push_back(parsed);
+        }
+
+        if (toRet.labelledObjects.size() > 0)
+        {
+            toRet.sweepTime = toRet.labelledObjects[0]->m_time;
+        }
+
+        toRet.sweepCenter = aRoom.getIntermediateCloudTransformsRegistered()[aRoom.getIntermediateCloudTransformsRegistered().size()/2].getOrigin();
+        toRet.transformToGlobal = aRoom.getIntermediateCloudTransforms()[0];
+        toRet.waypoint = aRoom.getRoomStringId();
+
+        return toRet;
+    }
 
 
 #include "load_utilities.hpp"
