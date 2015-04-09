@@ -12,7 +12,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
    string waypId = "WayPoint16"; // the only one for which there is labelled data
-   bool visualize = false; // change this if you want
+   bool visualize = true; // change this if you want
    string dataPath = "/home/rares/Data/Test_registered_dana/";
 
    pcl::visualization::PCLVisualizer *p = new pcl::visualization::PCLVisualizer (argc, argv, "Labelled data");
