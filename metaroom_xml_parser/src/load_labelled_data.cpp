@@ -13,7 +13,15 @@ int main(int argc, char** argv)
 {
    string waypId = "WayPoint16"; // the only one for which there is labelled data
    bool visualize = true; // change this if you want
-   string dataPath = "/home/rares/Data/Test_registered_dana/";
+   string dataPath = "/path/to/data/KTH_longterm_dataset_processed/";
+
+   if (argc == 3)
+   {
+      dataPath = argv[1];
+      waypId = argv[2];
+   } else {
+      cout<<"Using default arguments"<<endl;
+   }
 
    pcl::visualization::PCLVisualizer *p = new pcl::visualization::PCLVisualizer (argc, argv, "Labelled data");
    p->addCoordinateSystem();
