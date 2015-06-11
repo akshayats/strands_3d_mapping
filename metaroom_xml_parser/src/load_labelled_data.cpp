@@ -45,6 +45,7 @@ int main(int argc, char** argv)
         // To transform to the map frame of reference:
         static tf::StampedTransform world_transform = data.transformToGlobal;
         pcl_ros::transformPointCloud(*data.completeCloud, *data.completeCloud,world_transform);
+
         for (auto object: data.labelledObjects)
         {
             // Transforms entire point clouds
@@ -84,3 +85,16 @@ int main(int argc, char** argv)
 
    }
 }
+
+
+
+
+//geometry_msgs::PointStamped pt;
+//geometry_msgs::PointStamped pt_transformed;
+//pt.header = myCloud->header;
+//pt.point.x = myCloud->points[1].x;
+//pt.point.y = myCloud->points[1].y;
+//pt.point.z = myCloud->points[1].z;
+
+//tf::TransformListener listener;
+//listener.transformPoint("target_frame", pt, pt_transformed);
