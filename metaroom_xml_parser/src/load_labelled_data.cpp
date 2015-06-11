@@ -100,4 +100,3 @@ int main(int argc, char** argv)
 //listener.transformPoint("target_frame", pt, pt_transformed);
 
 // open load_utilities.h transforms.h semantic_map/dynamic_object.cpp
-// akjdhba
