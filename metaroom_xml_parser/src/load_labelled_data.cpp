@@ -1,6 +1,10 @@
 #include "load_utilities.h"
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl_ros/transforms.h>
+#include "tf/transform_datatypes.h"
+#include <tf_conversions/tf_eigen.h>
+#include "Eigen/Core"
+#include "Eigen/Geometry"
 
 typedef pcl::PointXYZRGB PointType;
 typedef pcl::PointCloud<PointType> Cloud;
@@ -44,6 +48,12 @@ int main(int argc, char** argv)
 
         // To transform to the map frame of reference:
         static tf::StampedTransform world_transform = data.transformToGlobal;
+// Akshaya ---
+        Eigen::Affine3d world_transform_mat;
+        tf::transformTFToEigen(world_transform, world_transform_mat);
+        cout << "Transform is:::::" << world_transform_mat.matrix();
+//        cout << "Transform is:::::" << world_transform_mat;
+// --- Akshaya
         pcl_ros::transformPointCloud(*data.completeCloud, *data.completeCloud,world_transform);
 
         for (auto object: data.labelledObjects)
@@ -66,7 +76,7 @@ int main(int argc, char** argv)
         for ( size_t j=0; j<data.labelledObjects.size(); j++ )
         {
             DynamicObject::Ptr object = data.labelledObjects[j];
-            cout<<"Labelled object "<<j<<"  points "<<object->m_points->points.size()<<"  label  "<<object->m_label<<"  Bounding box " <<object->m_bboxHighest <<endl;
+            cout<<"Labelled object "<<j<<"  points "<<object->m_points->points.size()<<"  label  "<< object->m_label<<"  Bounding box " <<object->m_bboxHighest.getVector3fMap()[0] <<endl;
             if (visualize)
             {
                 stringstream ss;ss<<"object"<<j;
