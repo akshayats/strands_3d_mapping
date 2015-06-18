@@ -16,7 +16,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
    string waypId = "WayPoint16"; // the only one for which there is labelled data
-   bool visualize = true; // change this if you want
+   bool visualize = false; // change this if you want
    //string dataPath = "/path/to/data/KTH_longterm_dataset_processed/";
    string dataPath = "/media/akshaya/18F69AB9F69A969A/room-data";
 
@@ -48,12 +48,10 @@ int main(int argc, char** argv)
 
         // To transform to the map frame of reference:
         static tf::StampedTransform world_transform = data.transformToGlobal;
-// Akshaya ---
+        // In Affine3d format
         Eigen::Affine3d world_transform_mat;
         tf::transformTFToEigen(world_transform, world_transform_mat);
         cout << "Transform is:::::" << world_transform_mat.matrix();
-//        cout << "Transform is:::::" << world_transform_mat;
-// --- Akshaya
         pcl_ros::transformPointCloud(*data.completeCloud, *data.completeCloud,world_transform);
 
         for (auto object: data.labelledObjects)
@@ -76,7 +74,12 @@ int main(int argc, char** argv)
         for ( size_t j=0; j<data.labelledObjects.size(); j++ )
         {
             DynamicObject::Ptr object = data.labelledObjects[j];
-            cout<<"Labelled object "<<j<<"  points "<<object->m_points->points.size()<<"  label  "<< object->m_label<<"  Bounding box " <<object->m_bboxHighest.getVector3fMap()[0] <<endl;
+            object->m_centroid[3] = 1;
+            cout<<"Labelled object "<<j<<"  points "<<object->m_points->points.size()<<"  label  "<< object->m_label<<"  Centroid " <<object->m_centroid<<endl;
+            Eigen::Vector4f newPoint;
+            // Transforming the point into new coordinate axes
+            newPoint   = world_transform_mat.cast<float>().matrix() * object->m_centroid;
+            cout << "Transformed point is :::"<< newPoint  << endl;
             if (visualize)
             {
                 stringstream ss;ss<<"object"<<j;
